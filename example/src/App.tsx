@@ -22,13 +22,7 @@ export default function App() {
       <RNImageCarousel
         ref={ref}
         data={data}
-        style={{
-          width: '100%',
-          height: 300,
-          backgroundColor: 'green',
-          borderRadius: 20,
-          overflow: 'hidden',
-        }}
+        style={styles.carousel}
         autoPlay
         interval={1500}
         onPressImage={console.log}
@@ -46,9 +40,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  box: {
-    width: 60,
-    height: 60,
-    marginVertical: 20,
+  carousel: {
+    width: '100%',
+    height: 300,
+    backgroundColor: 'green',
+    borderRadius: 20,
+    overflow: 'hidden',
   },
 });
