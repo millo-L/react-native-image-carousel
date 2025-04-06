@@ -1,34 +1,28 @@
-#import <React/RCTViewManager.h>
-
-@interface ImageCarouselViewManager : RCTViewManager
-@end
+#import "ImageCarouselViewManager.h"
+#import "ImageCarouselView.h"
+#import <React/RCTUIManager.h>
 
 @implementation ImageCarouselViewManager
 
-RCT_EXPORT_MODULE(ImageCarouselView)
+RCT_EXPORT_MODULE(ImageCarousel)
 
-- (UIView *)view
-{
-  return [[UIView alloc] init];
+- (UIView *)view {
+  return [[ImageCarouselView alloc] init];
 }
 
-RCT_CUSTOM_VIEW_PROPERTY(color, NSString, UIView)
-{
-  [view setBackgroundColor:[self hexStringToColor:json]];
-}
+RCT_EXPORT_VIEW_PROPERTY(data, NSArray)
+RCT_EXPORT_VIEW_PROPERTY(autoPlay, BOOL)
+RCT_EXPORT_VIEW_PROPERTY(interval, NSInteger)
+RCT_EXPORT_VIEW_PROPERTY(onPressImage, RCTBubblingEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onChangeIndex, RCTBubblingEventBlock)
 
-- hexStringToColor:(NSString *)stringToConvert
-{
-  NSString *noHashString = [stringToConvert stringByReplacingOccurrencesOfString:@"#" withString:@""];
-  NSScanner *stringScanner = [NSScanner scannerWithString:noHashString];
-
-  unsigned hex;
-  if (![stringScanner scanHexInt:&hex]) return nil;
-  int r = (hex >> 16) & 0xFF;
-  int g = (hex >> 8) & 0xFF;
-  int b = (hex) & 0xFF;
-
-  return [UIColor colorWithRed:r / 255.0f green:g / 255.0f blue:b / 255.0f alpha:1.0f];
+RCT_EXPORT_METHOD(scrollToIndex:(nonnull NSNumber *)reactTag index:(NSInteger)index) {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    UIView *view = [self.bridge.uiManager viewForReactTag:reactTag];
+    if ([view isKindOfClass:[ImageCarouselView class]]) {
+      [(ImageCarouselView *)view scrollToIndex:index];
+    }
+  });
 }
 
 @end
