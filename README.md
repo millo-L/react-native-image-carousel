@@ -5,7 +5,7 @@ RN Image Carousel using Native
 ## Installation
 
 ```sh
-yarn add react-native-image-carousel
+yarn add @millo-l/react-native-image-carousel
 
 cd ios && pod install --repo-update && cd ..
 ```
@@ -33,7 +33,7 @@ import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
 import RNImageCarousel, {
   type RNImageCarouselRef,
-} from 'react-native-image-carousel';
+} from '@millo-l/react-native-image-carousel';
 
 export default function App() {
   const ref = useRef<RNImageCarouselRef>(null);
