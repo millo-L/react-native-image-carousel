@@ -2333,6 +2333,60 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@millo-l/react-native-image-carousel-example@workspace:example":
+  version: 0.0.0-use.local
+  resolution: "@millo-l/react-native-image-carousel-example@workspace:example"
+  dependencies:
+    "@babel/core": ^7.25.2
+    "@babel/preset-env": ^7.25.3
+    "@babel/runtime": ^7.25.0
+    "@react-native-community/cli": 15.0.1
+    "@react-native-community/cli-platform-android": 15.0.1
+    "@react-native-community/cli-platform-ios": 15.0.1
+    "@react-native/babel-preset": 0.76.7
+    "@react-native/metro-config": 0.76.7
+    "@react-native/typescript-config": 0.76.7
+    "@types/react": ^18.2.6
+    react: 18.3.1
+    react-native: 0.76.7
+    react-native-builder-bob: ^0.40.0
+  languageName: unknown
+  linkType: soft
+
+"@millo-l/react-native-image-carousel@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@millo-l/react-native-image-carousel@workspace:."
+  dependencies:
+    "@commitlint/config-conventional": ^19.6.0
+    "@eslint/compat": ^1.2.7
+    "@eslint/eslintrc": ^3.3.0
+    "@eslint/js": ^9.22.0
+    "@evilmartians/lefthook": ^1.5.0
+    "@react-native/eslint-config": ^0.78.0
+    "@release-it/conventional-changelog": ^9.0.2
+    "@testing-library/react-native": ^13.2.0
+    "@types/jest": ^29.5.5
+    "@types/react": ^18.2.6
+    commitlint: ^19.6.1
+    del-cli: ^5.1.0
+    eslint: ^9.22.0
+    eslint-config-prettier: ^10.1.1
+    eslint-plugin-prettier: ^5.2.3
+    jest: ^29.7.0
+    prettier: ^3.0.3
+    react: 18.3.1
+    react-native: 0.76.7
+    react-native-builder-bob: ^0.40.0
+    react-test-renderer: 18.3.1
+    release-it: ^17.10.0
+    turbo: ^1.10.7
+    typescript: ^5.2.2
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  languageName: unknown
+  linkType: soft
+
 "@nicolo-ribaudo/eslint-scope-5-internals@npm:5.1.1-v1":
   version: 5.1.1-v1
   resolution: "@nicolo-ribaudo/eslint-scope-5-internals@npm:5.1.1-v1"
@@ -10666,60 +10720,6 @@ __metadata:
   checksum: 24060ce833ab3ac52f29fc8072cb15d97401aa2f8d67adc2ed7b4359f9879da65858d78e3eb0353a03374a295c931e5201373129e4341bd6f83adf120e70c209
   languageName: node
   linkType: hard
-
-"react-native-image-carousel-example@workspace:example":
-  version: 0.0.0-use.local
-  resolution: "react-native-image-carousel-example@workspace:example"
-  dependencies:
-    "@babel/core": ^7.25.2
-    "@babel/preset-env": ^7.25.3
-    "@babel/runtime": ^7.25.0
-    "@react-native-community/cli": 15.0.1
-    "@react-native-community/cli-platform-android": 15.0.1
-    "@react-native-community/cli-platform-ios": 15.0.1
-    "@react-native/babel-preset": 0.76.7
-    "@react-native/metro-config": 0.76.7
-    "@react-native/typescript-config": 0.76.7
-    "@types/react": ^18.2.6
-    react: 18.3.1
-    react-native: 0.76.7
-    react-native-builder-bob: ^0.40.0
-  languageName: unknown
-  linkType: soft
-
-"react-native-image-carousel@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "react-native-image-carousel@workspace:."
-  dependencies:
-    "@commitlint/config-conventional": ^19.6.0
-    "@eslint/compat": ^1.2.7
-    "@eslint/eslintrc": ^3.3.0
-    "@eslint/js": ^9.22.0
-    "@evilmartians/lefthook": ^1.5.0
-    "@react-native/eslint-config": ^0.78.0
-    "@release-it/conventional-changelog": ^9.0.2
-    "@testing-library/react-native": ^13.2.0
-    "@types/jest": ^29.5.5
-    "@types/react": ^18.2.6
-    commitlint: ^19.6.1
-    del-cli: ^5.1.0
-    eslint: ^9.22.0
-    eslint-config-prettier: ^10.1.1
-    eslint-plugin-prettier: ^5.2.3
-    jest: ^29.7.0
-    prettier: ^3.0.3
-    react: 18.3.1
-    react-native: 0.76.7
-    react-native-builder-bob: ^0.40.0
-    react-test-renderer: 18.3.1
-    release-it: ^17.10.0
-    turbo: ^1.10.7
-    typescript: ^5.2.2
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  languageName: unknown
-  linkType: soft
 
 "react-native@npm:0.76.7":
   version: 0.76.7

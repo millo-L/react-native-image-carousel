@@ -1,6 +1,6 @@
 {
   "name": "@millo-l/react-native-image-carousel",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "RN Image Carousel using Native",
   "source": "./src/index.tsx",
   "main": "./lib/module/index.js",
@@ -31,7 +31,7 @@
     "!**/.*"
   ],
   "scripts": {
-    "example": "yarn workspace react-native-image-carousel-example",
+    "example": "yarn workspace @millo-l/react-native-image-carousel-example",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",

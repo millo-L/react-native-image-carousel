@@ -2,7 +2,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "react-native-image-carousel": ["./src/index"]
+      "@millo-l/react-native-image-carousel": ["./src"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

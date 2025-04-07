@@ -10,6 +10,21 @@ yarn add react-native-image-carousel
 cd ios && pod install --repo-update && cd ..
 ```
 
+## Props
+
+| 이름        | 설명                              | 타입                                                                                                  | 필수 |
+| ----------- | --------------------------------- | ----------------------------------------------------------------------------------------------------- | ---- |
+| data       | 이미지 리스트                   | T & { imgUrl: string }                                                                                                | O    |
+| autoPlay        | 콘텐츠 클릭 시 이동할 링크 정보   | boolean | X    |
+| interval    | 자동 스크롤 인터벌 (ms 단위)               | string                                                                                                | X    |
+| onPressImage        | 콘텐츠의 상세 설명                | (item: T & { imgUrl: string }, index: number) => void                                                                                                | X    |
+| onChangeIndex  | 콘텐츠의 이미지 너비 (단위: 픽셀) | (index: number) => void                                                                                                | X    |
+
+## Refs
+
+| 이름        | 설명                              | 타입                                                                                                  |
+| ----------- | --------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| scrollToIndex       | index로 애니메이션 이동                   | ref.current?.scrollToIndex(index: number)                                                                                                |
 ## Usage
 
 

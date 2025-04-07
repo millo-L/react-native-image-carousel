@@ -148,10 +148,30 @@
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
   [self handleLoopingIfNeeded];
   [self resetAutoPlayTimer];
+  [self performSelector:@selector(notifyIndexChangeIfNeeded) withObject:nil afterDelay:0.1];
 }
 
 - (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView {
   [self handleLoopingIfNeeded];
+  [self resetAutoPlayTimer];
+  [self performSelector:@selector(notifyIndexChangeIfNeeded) withObject:nil afterDelay:0.1];
+}
+
+- (void)notifyIndexChangeIfNeeded {
+  NSIndexPath *visibleIndex = [[self.collectionView indexPathsForVisibleItems] firstObject];
+  if (!visibleIndex) return;
+
+  NSInteger originalCount = self.data.count / 3;
+  NSInteger currentIndex = visibleIndex.item % originalCount;
+  
+  static NSInteger lastIndex = -1;
+  NSLog(@"Current Index: %ld, Last Index: %ld", (long)currentIndex, (long)lastIndex);
+  if (currentIndex != lastIndex || lastIndex == -1) {
+    lastIndex = currentIndex;
+    if (self.onChangeIndex) {
+      self.onChangeIndex(@{@"index": @(currentIndex)});
+    }
+  }
 }
 
 #pragma mark - Layout
@@ -164,8 +184,12 @@
 
 - (void)handleLoopingIfNeeded {
   NSIndexPath *visibleIndex = [[self.collectionView indexPathsForVisibleItems] firstObject];
+  if (!visibleIndex) return;
+  
   NSInteger currentIndex = visibleIndex.item;
   NSInteger originalCount = self.data.count / 3;
+
+  NSLog(@"handleLoopingIfNeeded - Current Index: %ld, Original Count: %ld", (long)currentIndex, (long)originalCount);
 
   if (currentIndex < originalCount) {
     currentIndex += originalCount;
@@ -178,11 +202,6 @@
                                 atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
                                         animated:NO];
   }
-
-  NSInteger displayIndex = currentIndex % originalCount;
-  if (self.onChangeIndex) {
-    self.onChangeIndex(@{@"index": @(displayIndex)});
-  }
 }
 
 #pragma mark - Tap
@@ -191,7 +210,10 @@
   UIView *view = gesture.view;
   if (![view isKindOfClass:[UIImageView class]]) return;
 
-  NSInteger index = view.tag % (self.data.count / 3);
+  NSInteger originalCount = self.data.count / 3;
+  NSInteger index = view.tag % originalCount;
+  NSLog(@"Tapped Image - Original Tag: %ld, Calculated Index: %ld", (long)view.tag, (long)index);
+  
   if (self.onPressImage) {
     self.onPressImage(@{@"index": @(index)});
   }
@@ -202,9 +224,23 @@
   if (index < 0 || index >= originalCount) return;
 
   NSInteger targetIndex = index + originalCount;
+  NSLog(@"Scrolling to index: %ld (targetIndex: %ld)", (long)index, (long)targetIndex);
+  
   [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:targetIndex inSection:0]
                               atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
                                       animated:YES];
+  [self resetAutoPlayTimer];
+  
+  // Force update the index after a short delay to ensure animation is complete
+  [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(forceUpdateIndex:) object:nil];
+  [self performSelector:@selector(forceUpdateIndex:) withObject:@(index) afterDelay:0.3];
+}
+
+- (void)forceUpdateIndex:(NSNumber *)indexNumber {
+  NSInteger index = [indexNumber integerValue];
+  if (self.onChangeIndex) {
+    self.onChangeIndex(@{@"index": @(index)});
+  }
 }
 
 @end

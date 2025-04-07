@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
 import RNImageCarousel, {
   type RNImageCarouselRef,
-} from 'react-native-image-carousel';
+} from '@millo-l/react-native-image-carousel';
 
 export default function App() {
   const ref = useRef<RNImageCarouselRef>(null);
@@ -13,6 +13,8 @@ export default function App() {
         'https://picsum.photos/id/237/536/354',
         'https://picsum.photos/seed/picsum/536/354',
         'https://picsum.photos/id/1084/536/354?grayscale',
+        'https://picsum.photos/id/1060/536/354?blur=2',
+        'https://picsum.photos/id/870/536/354?grayscale&blur=2',
       ].map((url) => ({ imgUrl: url })),
     []
   );
