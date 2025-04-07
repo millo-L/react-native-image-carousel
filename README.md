@@ -69,8 +69,8 @@ const styles = StyleSheet.create({
 
 ## TODO
 
-[ ] Fabric + Turbo Module 지원
-[ ] Detox e2e 테스트 지원
+- [ ] Fabric + Turbo Module 지원
+- [ ] Detox e2e 테스트 지원
 
 ## License
 

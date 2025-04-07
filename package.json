@@ -1,6 +1,6 @@
 {
-  "name": "react-native-image-carousel",
-  "version": "0.1.0",
+  "name": "@millo-l/react-native-image-carousel",
+  "version": "1.0.0",
   "description": "RN Image Carousel using Native",
   "source": "./src/index.tsx",
   "main": "./lib/module/index.js",
@@ -48,7 +48,7 @@
     "type": "git",
     "url": "git+https://github.com/millo-L/react-native-image-carousel.git"
   },
-  "author": "millo-L <millo@wrtn.io> (https://github.com/millo-L)",
+  "author": "millo-L <seungmin3837@naver.com> (https://github.com/millo-L)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/millo-L/react-native-image-carousel/issues"
