@@ -1,6 +1,6 @@
 {
   "name": "@millo-l/react-native-image-carousel",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "RN Image Carousel using Native",
   "source": "./src/index.tsx",
   "main": "./lib/module/index.js",

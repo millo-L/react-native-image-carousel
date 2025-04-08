@@ -26,7 +26,7 @@ export default function App() {
         data={data}
         style={styles.carousel}
         autoPlay
-        interval={1500}
+        interval={3000}
         onPressImage={console.log}
         onChangeIndex={setIndex}
       />

@@ -12,7 +12,14 @@
 @interface ImageCarouselView () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout>
 
 @property (nonatomic, strong) UICollectionView *collectionView;
-@property (nonatomic, strong) NSTimer *timer;
+@property (nonatomic, strong) CADisplayLink *displayLink;
+@property (nonatomic, assign) NSTimeInterval lastUpdateTime;
+@property (nonatomic, assign) NSTimeInterval elapsedTime;
+@property (nonatomic, assign) BOOL isUserScrolling;
+@property (nonatomic, assign) BOOL isLooping;
+@property (nonatomic, assign) NSInteger lastReportedIndex;
+@property (nonatomic, assign) NSTimeInterval lastIndexChangeTime;
+@property (nonatomic, assign) BOOL isProgrammaticScroll;
 
 @end
 
@@ -31,6 +38,13 @@
     self.collectionView.dataSource = self;
     [self.collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"Cell"];
     [self addSubview:self.collectionView];
+    
+    // Initialize flags
+    self.isUserScrolling = NO;
+    self.isLooping = NO;
+    self.isProgrammaticScroll = NO;
+    self.lastReportedIndex = -1;
+    self.lastIndexChangeTime = 0;
   }
   return self;
 }
@@ -47,6 +61,12 @@
     [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:originalCount inSection:0]
                                 atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
                                         animated:NO];
+    
+    // Initialize lastReportedIndex with the first item
+    self.lastReportedIndex = 0;
+    if (self.onChangeIndex) {
+      self.onChangeIndex(@{@"index": @(0)});
+    }
   }
 }
 
@@ -71,24 +91,45 @@
 
 - (void)setAutoPlay:(BOOL)autoPlay {
   _autoPlay = autoPlay;
-  [self setupTimer];
+  [self setupDisplayLink];
 }
 
 - (void)setInterval:(NSInteger)interval {
   _interval = interval;
-  [self setupTimer];
+  [self setupDisplayLink];
 }
 
-- (void)setupTimer {
-  [self.timer invalidate];
-  self.timer = nil;
+- (void)setupDisplayLink {
+  [self.displayLink invalidate];
+  self.displayLink = nil;
+  self.elapsedTime = 0;
+  self.lastUpdateTime = 0;
 
   if (self.autoPlay && self.data.count > 1) {
-    self.timer = [NSTimer scheduledTimerWithTimeInterval:self.interval / 1000.0
-                                                  target:self
-                                                selector:@selector(nextPage)
-                                                userInfo:nil
-                                                 repeats:YES];
+    self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(handleDisplayLink:)];
+    [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+  }
+}
+
+- (void)handleDisplayLink:(CADisplayLink *)displayLink {
+  // Skip if user is actively scrolling
+  if (self.isUserScrolling) {
+    self.lastUpdateTime = displayLink.timestamp;
+    return;
+  }
+  
+  if (self.lastUpdateTime == 0) {
+    self.lastUpdateTime = displayLink.timestamp;
+    return;
+  }
+  
+  NSTimeInterval deltaTime = displayLink.timestamp - self.lastUpdateTime;
+  self.lastUpdateTime = displayLink.timestamp;
+  self.elapsedTime += deltaTime;
+  
+  if (self.elapsedTime >= self.interval / 1000.0) {
+    [self nextPage];
+    self.elapsedTime = 0;
   }
 }
 
@@ -106,7 +147,7 @@
 
 - (void)resetAutoPlayTimer {
   if (self.autoPlay) {
-    [self setupTimer];
+    [self setupDisplayLink];
   }
 }
 
@@ -145,32 +186,59 @@
 
 #pragma mark - UICollectionView Delegate
 
+#pragma mark - UIScrollView Delegate
+
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
+  self.isUserScrolling = YES;
+  self.isProgrammaticScroll = NO;
+  
+  // Cancel any pending notifications
+  [NSObject cancelPreviousPerformRequestsWithTarget:self];
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+  // If the scroll was initiated by the user (not programmatic), ensure flag is set
+  if (scrollView.isDragging || scrollView.isDecelerating) {
+    self.isUserScrolling = YES;
+  }
+  
+  // Cancel any pending index change notifications while scrolling
+  [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(notifyIndexChangeIfNeeded) object:nil];
+}
+
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
-  [self handleLoopingIfNeeded];
-  [self resetAutoPlayTimer];
-  [self performSelector:@selector(notifyIndexChangeIfNeeded) withObject:nil afterDelay:0.1];
+  // Add a small delay before processing to ensure stability
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if (!self.isProgrammaticScroll) {
+      self.isUserScrolling = NO;
+      [self handleLoopingIfNeeded];
+      [self resetAutoPlayTimer];
+      self.elapsedTime = 0;
+      [self performSelector:@selector(notifyIndexChangeIfNeeded) withObject:nil afterDelay:0.15];
+    }
+  });
 }
 
 - (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView {
-  [self handleLoopingIfNeeded];
-  [self resetAutoPlayTimer];
-  [self performSelector:@selector(notifyIndexChangeIfNeeded) withObject:nil afterDelay:0.1];
+  dispatch_async(dispatch_get_main_queue(), ^{
+    self.isProgrammaticScroll = NO;
+    self.isUserScrolling = NO;
+    [self handleLoopingIfNeeded];
+    [self resetAutoPlayTimer];
+    self.elapsedTime = 0;
+    [self performSelector:@selector(notifyIndexChangeIfNeeded) withObject:nil afterDelay:0.15];
+  });
 }
 
-- (void)notifyIndexChangeIfNeeded {
-  NSIndexPath *visibleIndex = [[self.collectionView indexPathsForVisibleItems] firstObject];
-  if (!visibleIndex) return;
-
-  NSInteger originalCount = self.data.count / 3;
-  NSInteger currentIndex = visibleIndex.item % originalCount;
-  
-  static NSInteger lastIndex = -1;
-  NSLog(@"Current Index: %ld, Last Index: %ld", (long)currentIndex, (long)lastIndex);
-  if (currentIndex != lastIndex || lastIndex == -1) {
-    lastIndex = currentIndex;
-    if (self.onChangeIndex) {
-      self.onChangeIndex(@{@"index": @(currentIndex)});
-    }
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
+  if (!decelerate) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      self.isUserScrolling = NO;
+      [self handleLoopingIfNeeded];
+      [self resetAutoPlayTimer];
+      self.elapsedTime = 0;
+      [self performSelector:@selector(notifyIndexChangeIfNeeded) withObject:nil afterDelay:0.15];
+    });
   }
 }
 
@@ -183,25 +251,44 @@
 #pragma mark - Looping
 
 - (void)handleLoopingIfNeeded {
+  // Prevent multiple simultaneous calls
+  static BOOL isExecuting = NO;
+  if (isExecuting) return;
+  isExecuting = YES;
+  
   NSIndexPath *visibleIndex = [[self.collectionView indexPathsForVisibleItems] firstObject];
-  if (!visibleIndex) return;
+  if (!visibleIndex) {
+    isExecuting = NO;
+    return;
+  }
   
   NSInteger currentIndex = visibleIndex.item;
   NSInteger originalCount = self.data.count / 3;
-
-  NSLog(@"handleLoopingIfNeeded - Current Index: %ld, Original Count: %ld", (long)currentIndex, (long)originalCount);
-
+  
+  self.isLooping = YES;
+  
   if (currentIndex < originalCount) {
     currentIndex += originalCount;
+    self.isProgrammaticScroll = YES;
     [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:currentIndex inSection:0]
                                 atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
                                         animated:NO];
   } else if (currentIndex >= originalCount * 2) {
     currentIndex -= originalCount;
+    self.isProgrammaticScroll = YES;
     [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:currentIndex inSection:0]
                                 atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
                                         animated:NO];
   }
+  
+  // Wait a bit before clearing looping flag to prevent index notifications during the process
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    self.isLooping = NO;
+    isExecuting = NO;
+    if (!self.isUserScrolling) {
+      [self notifyIndexChangeIfNeeded];
+    }
+  });
 }
 
 #pragma mark - Tap
@@ -212,7 +299,9 @@
 
   NSInteger originalCount = self.data.count / 3;
   NSInteger index = view.tag % originalCount;
-  NSLog(@"Tapped Image - Original Tag: %ld, Calculated Index: %ld", (long)view.tag, (long)index);
+  
+  // Update lastReportedIndex to maintain consistency
+  self.lastReportedIndex = index;
   
   if (self.onPressImage) {
     self.onPressImage(@{@"index": @(index)});
@@ -224,23 +313,56 @@
   if (index < 0 || index >= originalCount) return;
 
   NSInteger targetIndex = index + originalCount;
-  NSLog(@"Scrolling to index: %ld (targetIndex: %ld)", (long)index, (long)targetIndex);
+  
+  // Update lastReportedIndex immediately to prevent jumps
+  self.lastReportedIndex = index;
+  
+  // Mark as programmatic scroll
+  self.isProgrammaticScroll = YES;
+  self.isUserScrolling = NO;
   
   [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:targetIndex inSection:0]
                               atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
                                       animated:YES];
   [self resetAutoPlayTimer];
+  self.elapsedTime = 0;
   
-  // Force update the index after a short delay to ensure animation is complete
-  [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(forceUpdateIndex:) object:nil];
-  [self performSelector:@selector(forceUpdateIndex:) withObject:@(index) afterDelay:0.3];
-}
-
-- (void)forceUpdateIndex:(NSNumber *)indexNumber {
-  NSInteger index = [indexNumber integerValue];
+  // Force notify the index change
   if (self.onChangeIndex) {
     self.onChangeIndex(@{@"index": @(index)});
   }
+}
+
+- (void)notifyIndexChangeIfNeeded {
+  // Skip if we're in looping process or user is scrolling
+  if (self.isLooping || self.isUserScrolling) {
+    return;
+  }
+  
+  NSIndexPath *visibleIndex = [[self.collectionView indexPathsForVisibleItems] firstObject];
+  if (!visibleIndex) return;
+
+  NSInteger originalCount = self.data.count / 3;
+  NSInteger calculatedIndex = visibleIndex.item % originalCount;
+  
+  // Debounce index changes to prevent rapid consecutive reports
+  NSTimeInterval currentTime = CACurrentMediaTime();
+  BOOL shouldDebounce = (currentTime - self.lastIndexChangeTime) < 0.3;
+  
+  // Only fire if index actually changed and we're not in a transition state
+  if (calculatedIndex != self.lastReportedIndex && !shouldDebounce) {
+    self.lastReportedIndex = calculatedIndex;
+    self.lastIndexChangeTime = currentTime;
+    
+    if (self.onChangeIndex) {
+      self.onChangeIndex(@{@"index": @(calculatedIndex)});
+    }
+  }
+}
+
+- (void)dealloc {
+  [self.displayLink invalidate];
+  self.displayLink = nil;
 }
 
 @end
