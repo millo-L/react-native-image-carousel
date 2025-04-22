@@ -1,3 +1,8 @@
+## [1.0.4]
+
+### Android
+    - Prevented image flickering and black screen on Android when navigating between screens using react-navigation.
+
 ## [1.0.3]
 
 ### iOS

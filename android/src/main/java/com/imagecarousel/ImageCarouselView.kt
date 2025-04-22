@@ -217,10 +217,4 @@ class ImageCarouselView(context: Context) : FrameLayout(context) {
 
         eventDispatcher.dispatchEvent(eventEmitter)
     }
-
-    override fun onDetachedFromWindow() {
-        stopAutoScroll()
-        viewPager.adapter = null
-        super.onDetachedFromWindow()
-    }
 }
