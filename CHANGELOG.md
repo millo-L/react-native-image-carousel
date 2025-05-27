@@ -1,3 +1,8 @@
+## [1.0.5]
+
+### iOS
+    - fix iPad auto slide issue
+
 ## [1.0.4]
 
 ### Android

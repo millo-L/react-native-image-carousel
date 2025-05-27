@@ -112,9 +112,10 @@
 }
 
 - (void)handleDisplayLink:(CADisplayLink *)displayLink {
-  // Skip if user is actively scrolling
-  if (self.isUserScrolling) {
+  // Skip if user is actively scrolling or looping is in progress
+  if (self.isUserScrolling || self.isLooping) {
     self.lastUpdateTime = displayLink.timestamp;
+    self.elapsedTime = 0; // 타이머 리셋
     return;
   }
   
@@ -134,12 +135,18 @@
 }
 
 - (void)nextPage {
+  // 사용자가 스크롤 중이거나 루프 처리 중이면 자동 재생 건너뛰기
+  if (self.isUserScrolling || self.isLooping) {
+    return;
+  }
+  
   NSIndexPath *visibleIndex = [[self.collectionView indexPathsForVisibleItems] firstObject];
   if (!visibleIndex) return;
 
   NSInteger nextItem = visibleIndex.item + 1;
   if (nextItem >= self.data.count) return;
 
+  self.isProgrammaticScroll = YES;
   [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:nextItem inSection:0]
                               atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
                                       animated:YES];
@@ -265,30 +272,34 @@
   NSInteger currentIndex = visibleIndex.item;
   NSInteger originalCount = self.data.count / 3;
   
-  self.isLooping = YES;
+  BOOL needsLooping = (currentIndex < originalCount) || (currentIndex >= originalCount * 2);
   
-  if (currentIndex < originalCount) {
-    currentIndex += originalCount;
-    self.isProgrammaticScroll = YES;
-    [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:currentIndex inSection:0]
-                                atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
-                                        animated:NO];
-  } else if (currentIndex >= originalCount * 2) {
-    currentIndex -= originalCount;
-    self.isProgrammaticScroll = YES;
-    [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:currentIndex inSection:0]
-                                atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
-                                        animated:NO];
-  }
-  
-  // Wait a bit before clearing looping flag to prevent index notifications during the process
-  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-    self.isLooping = NO;
-    isExecuting = NO;
-    if (!self.isUserScrolling) {
-      [self notifyIndexChangeIfNeeded];
+  if (needsLooping) {
+    self.isLooping = YES;
+    
+    if (currentIndex < originalCount) {
+      currentIndex += originalCount;
+    } else if (currentIndex >= originalCount * 2) {
+      currentIndex -= originalCount;
     }
-  });
+    
+    self.isProgrammaticScroll = YES;
+    [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:currentIndex inSection:0]
+                                  atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally
+                                          animated:NO];
+    
+    // 루프 처리 완료 후 상태 리셋
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+      self.isLooping = NO;
+      self.isProgrammaticScroll = NO;
+      isExecuting = NO;
+      if (!self.isUserScrolling) {
+        [self notifyIndexChangeIfNeeded];
+      }
+    });
+  } else {
+    isExecuting = NO;
+  }
 }
 
 #pragma mark - Tap
